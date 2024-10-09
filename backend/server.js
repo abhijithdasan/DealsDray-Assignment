@@ -1,26 +1,92 @@
-require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const connectDB = require('./config/db'); // Import the database connection
-const authRoutes = require('./routes/auth'); // Import authentication routes
- // Load environment variables
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.json());
+app.use(express.json()); // This is necessary for parsing JSON requests
 
-// MongoDB Connection
-connectDB(); // Connect to MongoDB using the connectDB function from db.js
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log('MongoDB connected');
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+  });
 
-// Routes
-app.use('/api/auth', authRoutes); // Define authentication routes
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// User model
+const UserSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
 });
+
+const User = mongoose.model('User', UserSchema);
+
+// Registration route
+app.post('/api/auth/register', async (req, res) => {
+  const { userId, password } = req.body;
+
+  // Check if the user already exists
+  const existingUser = await User.findOne({ userId });
+  if (existingUser) {
+    return res.status(400).json({ message: 'User already exists' });
+  }
+
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create a new user
+  const newUser = new User({ userId, password: hashedPassword });
+  await newUser.save();
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+// Login route
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { userId, password } = req.body;
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+
+// Protected route
+  app.get('/api/protected', authenticateToken, (req, res) => {
+    res.json({ message: 'Welcome to the protected route!' });
+  });
+  
+  // Helper function to authenticate the token
+  function authenticateToken(req, res, next) {
+    const token = req.headers['authorization'].split(' ')[1];
+    if (token == null) return res.status(401).json({ message: 'Token not provided' });
+    
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ message: 'Invalid token' });
+      req.user = user;
+      next();
+    });
+  }
