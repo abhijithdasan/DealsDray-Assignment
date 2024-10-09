@@ -1,58 +1,61 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import '../styles.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [userId, setUserId] = useState(''); // Updated variable name
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password) {
-      setError('Please fill in all fields');
+    setMessage('');
+
+    if (!userId || !password) { // Check for userId instead of username
+      setMessage('Please fill in all fields');
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/login', {
-        f_userName: username,
-        f_Pwd: password,
+      const response = await axios.post('http://localhost:3001/api/auth/login', { // Ensure the endpoint matches
+        userId, // Use userId here
+        password,
       });
-
-      if (response.data.message === 'Login successful') {
-        // Store username in localStorage
-        localStorage.setItem('username', username);
-        navigate('/dashboard');
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('userId', userId); // Updated variable name
+      navigate('/dashboard'); // Adjust if needed
+    } catch (error) {
+      if (error.response) {
+        setMessage(error.response.data.message);
       } else {
-        setError('Invalid login details');
+        setMessage('An error occurred. Please try again.');
       }
-    } catch (err) {
-      setError('Error occurred. Please try again.');
     }
   };
 
   return (
     <div className="login-container">
       <h2>Login</h2>
-      <form onSubmit={handleLogin} className="login-form">
+      <form onSubmit={handleSubmit} className="login-form">
         <input
           type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          placeholder="User ID" // Update placeholder for clarity
+          value={userId} // Updated variable name
+          onChange={(e) => setUserId(e.target.value)} // Updated variable name
+          required
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
         <button type="submit">Login</button>
       </form>
-      {error && <p className="error">{error}</p>}
+      {message && <p className="error">{message}</p>}
     </div>
   );
 };

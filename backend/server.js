@@ -1,24 +1,26 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/auth');
+const cors = require('cors');
+const connectDB = require('./config/db'); // Import the database connection
+const authRoutes = require('./routes/auth'); // Import authentication routes
+ // Load environment variables
 
 const app = express();
-
-// Connect to MongoDB
-connectDB();
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+
+// MongoDB Connection
+connectDB(); // Connect to MongoDB using the connectDB function from db.js
 
 // Routes
-app.use('/api', authRoutes);
+app.use('/api/auth', authRoutes); // Define authentication routes
 
-// Start Server
-const PORT = process.env.PORT || 3001;
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
