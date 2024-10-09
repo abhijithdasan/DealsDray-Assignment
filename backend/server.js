@@ -12,6 +12,13 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json()); // This is necessary for parsing JSON requests
 
+// Import routes
+const employeeRoutes = require('./routes/employeeRoutes');
+const authRoutes = require('./routes/Auth');
+
+app.use('/api', employeeRoutes);
+app.use('/api', authRoutes);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -28,30 +35,36 @@ mongoose.connect(process.env.MONGO_URI, {
   });
 
 // User model
+// User model
 const UserSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
+
 
 // Registration route
 app.post('/api/auth/register', async (req, res) => {
-  const { userId, password } = req.body;
+  try {
+    const { userId, password } = req.body;
 
-  // Check if the user already exists
-  const existingUser = await User.findOne({ userId });
-  if (existingUser) {
-    return res.status(400).json({ message: 'User already exists' });
+    // Check if the user already exists
+    const existingUser = await User.findOne({ userId });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const newUser = new User({ userId, password: hashedPassword });
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
-
-  // Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create a new user
-  const newUser = new User({ userId, password: hashedPassword });
-  await newUser.save();
-  res.status(201).json({ message: 'User registered successfully' });
 });
 
 // Login route
@@ -73,20 +86,22 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-
 // Protected route
-  app.get('/api/protected', authenticateToken, (req, res) => {
-    res.json({ message: 'Welcome to the protected route!' });
+app.get('/api/protected', authenticateToken, (req, res) => {
+  res.json({ message: 'Welcome to the protected route!' });
+});
+
+// Helper function to authenticate the token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.status(401).json({ message: 'Token not provided' });
+
+  const token = authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Token not provided' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid token' });
+    req.user = user;
+    next();
   });
-  
-  // Helper function to authenticate the token
-  function authenticateToken(req, res, next) {
-    const token = req.headers['authorization'].split(' ')[1];
-    if (token == null) return res.status(401).json({ message: 'Token not provided' });
-    
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ message: 'Invalid token' });
-      req.user = user;
-      next();
-    });
-  }
+}

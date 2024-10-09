@@ -11,6 +11,13 @@ body {
   }
   
   .login-container {
+    display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  }
+
+  .login-box {
     background-color: white;
     padding: 40px;
     border-radius: 10px;
@@ -26,7 +33,7 @@ body {
     color: #333;
   }
   
-  .login-form input {
+  .login-box input {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
@@ -35,13 +42,18 @@ body {
     font-size: 16px;
     box-sizing: border-box;
   }
+
+  .login-box input,
+.login-box .btn {
+  width: 100%;
+}
   
-  .login-form input:focus {
+  .login-box input:focus {
     border-color: #007bff;
     outline: none;
   }
   
-  .login-form .btn {
+  .login-box .btn {
     width: 100%;
     padding: 12px;
     margin-top: 20px;
@@ -54,7 +66,7 @@ body {
     transition: background-color 0.3s ease;
   }
   
-  .login-form .btn:hover {
+  .login-box .btn:hover {
     background-color: #0056b3;
   }
   
