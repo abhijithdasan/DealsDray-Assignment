@@ -20,18 +20,21 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         userId,
         password,
       });
+
       if (!response.data.token) {
         setMessage('Invalid user ID or password');
         return;
       }
+
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('userId', userId); // Store userId instead of username
+      localStorage.setItem('userId', userId);
       navigate('/dashboard');
     } catch (error) {
+      console.error('Login error:', error); // Log the full error
       if (error.response) {
         setMessage(error.response.data.message); // Show error message from server
       } else {
@@ -42,26 +45,26 @@ const Login = () => {
 
   return (
     <div className="login-container">
-    <div className="login-box">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit} className="login-form">
-        <input
-          type="text"
-          placeholder="User ID"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button className='btn' type="submit">Login</button>
-      </form>
-      {message && <p className="error">{message}</p>}
+      <div className="login-box">
+        <h2>Login</h2>
+        <form onSubmit={handleSubmit} className="login-form">
+          <input
+            type="text"
+            placeholder="User ID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button className='btn' type="submit">Login</button>
+        </form>
+        {message && <p className="error">{message}</p>}
       </div>
     </div>
   );

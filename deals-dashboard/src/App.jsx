@@ -6,23 +6,24 @@ import EmployeeList from './components/EmployeeList';
 import CreateEmployee from './components/CreateEmployee';
 import Login from './components/Login';
 import Layout from './components/Layout';
+import ErrorBoundary from './ErrorBoundary';
 
 const App = () => {
-  return (
-    <Router>
-    <Routes>
-      {/* Public route without layout */}
-      <Route path="/login" element={<Login />} />
-
-      {/* Private routes with shared layout (navbar) */}
-      <Route path="/" element={<Layout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/employee" element={<EmployeeList />} />
-        <Route path="/create" element={<CreateEmployee />} />
-      </Route>
-    </Routes>
-  </Router>
-  );
+    return (
+        <Router>
+            <ErrorBoundary>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<Layout />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/employeelist" element={<EmployeeList />} /> {/* Updated route name */}
+                        <Route path="/create" element={<CreateEmployee />} />
+                        <Route path="/create/:id" element={<CreateEmployee />} /> {/* Route for editing employee */}
+                    </Route>
+                </Routes>
+            </ErrorBoundary>
+        </Router>
+    );
 };
 
 export default App;

@@ -1,24 +1,11 @@
 const express = require('express');
+const Employee = require('../models/Employee');
 const router = express.Router();
-const Employee = require('../models/Employee'); // Import your Employee model
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
 // Create employee
 router.post('/employees', async (req, res) => {
   try {
-    const { name, email, mobile, designation, gender, course, image } = req.body;
-
-    const newEmployee = new Employee({
-      name,
-      email,
-      mobile,
-      designation,
-      gender,
-      course,
-      image,
-    });
-
+    const newEmployee = new Employee(req.body);
     await newEmployee.save();
     res.status(201).json(newEmployee);
   } catch (error) {

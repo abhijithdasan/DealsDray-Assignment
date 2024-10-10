@@ -11,12 +11,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const allowedOrigins = ['http://localhost:5173'];
+app.use(cors({
+    origin: 'http://localhost:5173', // Your React app URL
+    credentials: true,
+}));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads')); // Serve uploaded images
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.log('MongoDB connection error:', err));
 
@@ -25,7 +31,6 @@ const UserSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 });
-
 const User = mongoose.model('User', UserSchema);
 
 // Employee Model
@@ -36,9 +41,8 @@ const EmployeeSchema = new mongoose.Schema({
     designation: { type: String, required: true },
     gender: { type: String, required: true },
     course: { type: [String], required: true },
-    image: { type: String, required: false }
+    image: { type: String }
 });
-
 const Employee = mongoose.model('Employee', EmployeeSchema);
 
 // Image Upload Setup
@@ -101,35 +105,36 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Protected route example
-app.get('/api/protected', authenticateToken, (req, res) => {
-    res.json({ message: 'Welcome to the protected route!' });
-});
-
-// Helper function to authenticate the token
+// Middleware to authenticate token
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(401).json({ message: 'Token not provided' });
+    const token = authHeader && authHeader.split(' ')[1]; // Get the token from the header
 
-    const token = authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'Token not provided' });
+    if (!token) return res.sendStatus(403); // Forbidden if token is not present
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Invalid token' });
+        if (err) return res.sendStatus(403); // Forbidden if token verification fails
         req.user = user;
         next();
     });
 }
 
-// CRUD Routes for Employee
 
 // Create Employee
-app.post('/api/employees', upload.single('image'), async (req, res) => {
+app.post('/api/employees', authenticateToken, upload.single('image'), async (req, res) => {
     try {
         const { name, email, mobile, designation, gender, course } = req.body;
+
         const newEmployee = new Employee({
-            name, email, mobile, designation, gender, course: JSON.parse(course), image: req.file ? req.file.filename : null
+            name,
+            email,
+            mobile,
+            designation,
+            gender,
+            course: course.split(','), // Split courses into an array
+            image: req.file ? req.file.filename : null
         });
+
         await newEmployee.save();
         res.status(201).json(newEmployee);
     } catch (error) {
@@ -138,7 +143,7 @@ app.post('/api/employees', upload.single('image'), async (req, res) => {
 });
 
 // Read Employees
-app.get('/api/employees', async (req, res) => {
+app.get('/api/employees', authenticateToken, async (req, res) => {
     try {
         const employees = await Employee.find({});
         res.status(200).json(employees);
@@ -148,7 +153,7 @@ app.get('/api/employees', async (req, res) => {
 });
 
 // Update Employee
-app.put('/api/employees/:id', async (req, res) => {
+app.put('/api/employees/:id', authenticateToken, async (req, res) => {
     try {
         const updatedEmployee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedEmployee) {
@@ -161,7 +166,7 @@ app.put('/api/employees/:id', async (req, res) => {
 });
 
 // Delete Employee
-app.delete('/api/employees/:id', async (req, res) => {
+app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
     try {
         const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
         if (!deletedEmployee) {
