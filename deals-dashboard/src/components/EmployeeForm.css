@@ -1,9 +1,11 @@
 .employee-form {
+    top: 40px;
     max-width: 500px;
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 8px;
+    position: relative;
 }
 
 .form-control {
@@ -11,6 +13,15 @@
     padding: 8px;
     margin: 8px 0;
     box-sizing: border-box;
+}
+.flex{
+    display: flex;
+    flex-direction: row;
+}
+
+.flex label {
+    
+    margin-right: 10px;
 }
 
 .btn {

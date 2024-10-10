@@ -168,8 +168,8 @@ body {
 }
 .employee-list{
   display: flex;
-  flex-direction:row;
-  justify-content: space-around
+  flex-direction: column;
+  align-items: center;
 }
 .employee-list-container h2 {
   margin-bottom: 20px;

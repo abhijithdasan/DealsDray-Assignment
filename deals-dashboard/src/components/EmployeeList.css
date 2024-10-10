@@ -1,7 +1,17 @@
+.emp-list{
+    display: flex;
+    flex-direction: column;
+    }
+    
 .employee-list {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
+    position: relative;
+}
+
+.emp-container{
+    
 }
 
 ul {
