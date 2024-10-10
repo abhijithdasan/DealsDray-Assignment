@@ -13,7 +13,7 @@ const App = () => {
         <Router>
             <ErrorBoundary>
                 <Routes>
-                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<Login />} />
                     <Route path="/" element={<Layout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/employeelist" element={<EmployeeList />} /> {/* Updated route name */}
