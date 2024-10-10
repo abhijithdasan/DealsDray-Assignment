@@ -22,9 +22,8 @@ const Layout = () => {
       {shouldShowNavbar && (
         <div className="navbar">
         <div className="logo">Logo</div>
-          <Link to="/dashboard" className='nav-item'>Dashboard</Link>
+          <Link to="/dashboard" className='nav-item'>Home</Link>
           <Link to="/employeelist" className='nav-item'>Employee List</Link>
-          <Link to="/create" className='nav-item'>Create</Link>
           <Link to={`/dashboard`} className='nav-item'>{userId}</Link>
           <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>

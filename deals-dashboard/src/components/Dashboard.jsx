@@ -8,8 +8,8 @@ const Dashboard = () => {
 
 
       <div className="dashboard-content">
-        <h2>Welcome, {userId}</h2>
-        <p>Select an option from the menu above to manage employees.</p>
+        <h2>Welcome, Admin Panel</h2>
+        <p></p>
       </div>
     </div>
   );

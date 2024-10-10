@@ -1,63 +1,65 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../styles.css';
-import '../App.css';
+import './EmployeeForm.css';
+
+const generateEmployeeId = () => {
+    return Math.floor(100 + Math.random() * 900);
+};
 
 const CreateEmployee = () => {
     const [name, setName] = useState('');
+    const [designation, setDesignation] = useState('');
     const [email, setEmail] = useState('');
     const [mobile, setMobile] = useState('');
-    const [designation, setDesignation] = useState('');
     const [gender, setGender] = useState('');
-    const [course, setCourse] = useState('');
+    const [course, setCourse] = useState(''); // Changed to a single value
     const [image, setImage] = useState(null);
-    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    const handleCourseChange = (e) => {
+        setCourse(e.target.value); // Set selected course
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage('');
+        setError('');
 
-        const token = localStorage.getItem('token'); // Retrieve the token here
-        console.log("Token before making request:", token); // Check if token is retrieved
-
-        if (!token) {
-            setMessage('You must be logged in to create an employee.');
-            return;
-        }
+        const employeeId = `emp-${generateEmployeeId()}`;
+        const createdDate = new Date(); // Get the current date
 
         const formData = new FormData();
+        formData.append('_id', employeeId);
         formData.append('name', name);
+        formData.append('designation', designation);
         formData.append('email', email);
         formData.append('mobile', mobile);
-        formData.append('designation', designation);
         formData.append('gender', gender);
-        formData.append('course', course);
+        formData.append('course',course);
+        formData.append('createdDate', createdDate.toISOString());
         if (image) {
             formData.append('image', image);
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/api/employees', formData, {
+            const token = localStorage.getItem('token'); // Get token from localStorage
+            await axios.post('http://localhost:5000/api/employees', formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
-                },
+                }
             });
-            if (response.status === 201) {
-                navigate('/employeelist'); // Redirect to employee list page
-            }
+            alert('Employee created successfully!');
+            navigate('/employeelist'); // Redirect to employee list
         } catch (error) {
-            console.error('Error creating employee:', error);
-            setMessage('Failed to create employee. Please try again later.');
+            setError('Failed to create employee. Please try again. ' + error.message);
         }
     };
 
     return (
-        <div className="create-employee-container">
+        <div className="create-employee">
             <h2>Create Employee</h2>
-            {message && <p className="error">{message}</p>}
+            {error && <p className='error'>{error}</p>}
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -66,6 +68,16 @@ const CreateEmployee = () => {
                     onChange={(e) => setName(e.target.value)}
                     required
                 />
+                <select
+                    value={designation}
+                    onChange={(e) => setDesignation(e.target.value)}
+                    required
+                >
+                    <option value="">Select Designation</option>
+                    <option value="HR">HR</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Sales">Sales</option>
+                </select>
                 <input
                     type="email"
                     placeholder="Email"
@@ -74,36 +86,65 @@ const CreateEmployee = () => {
                     required
                 />
                 <input
-                    type="text"
+                    type="number"
                     placeholder="Mobile"
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     required
                 />
-                <input
-                    type="text"
-                    placeholder="Designation"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    required
-                />
-                <select value={gender} onChange={(e) => setGender(e.target.value)} required>
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                </select>
-                <input
-                    type="text"
-                    placeholder="Course"
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    required
-                />
+                <div className='gender-section'>
+                    <label>Gender:</label>
+                    <label>
+                        <input
+                            type="radio"
+                            value="Male"
+                            checked={gender === 'Male'}
+                            onChange={(e) => setGender(e.target.value)}
+                            required
+                        /> Male
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            value="Female"
+                            checked={gender === 'Female'}
+                            onChange={(e) => setGender(e.target.value)}
+                            required
+                        /> Female
+                    </label>
+                </div>
+                <div className='course-section'>
+                    <h4>Select Course:</h4>
+                    <label>
+                        <input
+                            type="radio"
+                            value="MCA"
+                            checked={course === 'MCA'}
+                            onChange={handleCourseChange}
+                        /> MCA
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            value="BCA"
+                            checked={course === 'BCA'}
+                            onChange={handleCourseChange}
+                        /> BCA
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            value="BSC"
+                            checked={course === 'BSC'}
+                            onChange={handleCourseChange}
+                        /> BSC
+                    </label>
+                </div>
                 <input
                     type="file"
                     onChange={(e) => setImage(e.target.files[0])}
                 />
-                <button type="submit">Add Employee</button>
+                <button type="submit" className="btn">Add Employee</button>
             </form>
         </div>
     );
